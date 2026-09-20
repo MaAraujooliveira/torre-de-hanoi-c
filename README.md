@@ -2,6 +2,7 @@
 
 Trabalho da disciplina Estrutura de Dados (2026-02) — UTFPR
 Curso: Tecnologia em Análise e Desenvolvimento de Sistemas
+
 Professor: Clayton Kossoski
 
 ## Integrante
