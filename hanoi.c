@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <string.h>
+#include "ranking.h"
 
 #define MAX 8
+#define ARQUIVO_RANKING "ranking.txt"
 
 int pinos[3][MAX];   /* pinos[p][i] = tamanho do disco i do pino p (0 = base) */
 int topo[3];         /* quantos discos há em cada pino */
@@ -128,6 +131,27 @@ int turno(void) {
     return turno();                                /* chamada recursiva */
 }
 
+/* ---------- Ranking ---------- */
+
+/* Pede o nome do jogador e insere o resultado na lista encadeada. */
+No *registrar_pontuacao(No *ranking) {
+    char nome[TAM_NOME];
+    int minimo = minimo_jogadas(n);
+    int pontos = calcular_pontos(n, movimentos, minimo);
+
+    printf("Pontuacao: %d\n", pontos);
+    printf("Digite seu nome para o ranking: ");
+    if (fgets(nome, sizeof(nome), stdin) == NULL) nome[0] = '\0';
+    else if (strchr(nome, '\n') == NULL) limpar_buffer();   /* nome longo: descarta o resto */
+    nome[strcspn(nome, "\n")] = '\0';                      /* tira o \n do fgets */
+    if (nome[0] == '\0') strcpy(nome, "Anonimo");
+
+    ranking = inserir_ordenado(ranking, nome, pontos, n, movimentos);
+    salvar_ranking(ranking, ARQUIVO_RANKING);
+    mostrar_ranking(ranking);
+    return ranking;
+}
+
 /* ---------- Menu ---------- */
 
 /* Pergunta quantos discos (3 a MAX). Retorna 0 se a entrada acabou. */
@@ -143,10 +167,11 @@ int pedir_discos(void) {
 
 int main(void) {
     int opcao = 0;
+    No *ranking = carregar_ranking(ARQUIVO_RANKING);   /* lista começa com o que foi salvo */
 
-    while (opcao != 3) {
+    while (opcao != 4) {
         printf("\n=== TORRE DE HANOI ===\n");
-        printf("1 - Jogar\n2 - Ver a solucao automatica\n3 - Sair\nEscolha: ");
+        printf("1 - Jogar\n2 - Ver a solucao automatica\n3 - Ver ranking\n4 - Sair\nEscolha: ");
 
         int r = scanf("%d", &opcao);
         if (r == EOF) break;
@@ -159,7 +184,7 @@ int main(void) {
                 iniciar();
                 printf("Objetivo: levar todos os discos do pino A para o C.\n");
                 printf("Minimo possivel: %d jogadas.\n", minimo_jogadas(n));
-                turno();
+                if (turno()) ranking = registrar_pontuacao(ranking);  /* só pontua se venceu */
             }
         } else if (opcao == 2) {
             n = pedir_discos();
@@ -169,9 +194,12 @@ int main(void) {
                 resolver(n, 0, 2, 1);
                 mostrar();
             }
-        } else if (opcao != 3) {
+        } else if (opcao == 3) {
+            mostrar_ranking(ranking);
+        } else if (opcao != 4) {
             printf(">> Opcao invalida.\n");
         }
     }
+    liberar_lista(ranking);   /* devolve a memória de todos os nós */
     return 0;
 }
